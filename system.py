@@ -10,27 +10,27 @@ class CNNModel:
         self.train_vectors = train_vectors
         self.train_labels = train_labels
 
-    def cosineDistance(self, dist):
-        nearest = np.argmax(dist, axis=1)
-        mdist = np.max(dist, axis=1)
-        return self.train_labels[nearest], mdist
+    def mode_numpy(arr):
+        """Calculate the mode of an array using pure numpy."""
+        unique, counts = np.unique(arr, return_counts=True)
+        index = np.argmax(counts)
+        return unique[index]
 
-    def predict(self, test_vectors):
-        print(test_vectors.shape, self.train_vectors.shape)
-        print(self.train_labels.shape)
+    def predict(self, test_vectors, k=3):
         x = np.dot(test_vectors, self.train_vectors.transpose())
 
         modtest = np.sqrt(np.sum(test_vectors * test_vectors, axis=1))
         modtrain = np.sqrt(np.sum(self.train_vectors * self.train_vectors, axis=1))
 
-        modtest[modtest == 0] = 1e-10
-        modtrain[modtrain == 0] = 1e-10
-
         dist = x / np.outer(modtest, modtrain.transpose())
+        sorted_dists = np.argsort(dist, axis=1)[:, -k]
 
-        labels, mdist = self.cosineDistance(dist)
+        final_labels = []
+        for i in range(len(sorted_dists)):
+            mode_label = CNNModel.mode_numpy(sorted_dists[i])
+            final_labels.append(self.train_labels[mode_label])
 
-        return labels
+        return np.array(final_labels)
 
 
 class LDA:
